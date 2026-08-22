@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spend Scope — Personal Finance Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1210; --panel:#121a17; --panel2:#0e1614; --line:#1e2b26;
+  --text:#e8f0ec; --muted:#8fa39b; --green:#2ecc8f; --green-dim:#1d8f66;
+  --red:#e85d5d; --amber:#e8b44c; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;line-height:1.55;font-size:15px}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+header{border-bottom:1px solid var(--line);padding:26px 0;background:linear-gradient(180deg,#101815,var(--bg))}
+header .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.logo{font-weight:800;font-size:21px;letter-spacing:-.02em}
+.logo span{color:var(--green)}
+.tagline{color:var(--muted);font-size:13px}
+main{padding:28px 0 60px}
+
+/* Setup row */
+.setup{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:22px}
+label{display:block;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+input,select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14.5px;font-family:'Inter',sans-serif}
+input:focus,select:focus{outline:none;border-color:var(--green)}
+button{background:var(--green);color:#06130d;border:none;border-radius:8px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif}
+button:hover{filter:brightness(1.1)}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+button.ghost:hover{border-color:var(--green);color:var(--green)}
+button.danger{background:transparent;color:var(--red);border:1px solid var(--line)}
+
+/* Verdict */
+.verdict{border-radius:12px;padding:20px 22px;margin-bottom:22px;border:1px solid var(--line);background:var(--panel)}
+.verdict.good{border-color:rgba(46,204,143,.4)}
+.verdict.bad{border-color:rgba(232,93,93,.4)}
+.verdict h2{font-size:18px;margin-bottom:4px}
+.verdict .big{font-family:var(--mono);font-weight:600}
+.verdict .big.pos{color:var(--green)} .verdict .big.neg{color:var(--red)}
+.verdict p{color:var(--muted);font-size:14px}
+
+/* Grid of panels */
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;margin-bottom:22px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+.panel h3{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between;align-items:baseline}
+.panel h3 .sub{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+
+/* Category bars */
+.cat-row{display:grid;grid-template-columns:120px 1fr 88px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--panel2)}
+.cat-row:last-child{border-bottom:none}
+.cat-name{font-size:13.5px;font-weight:600}
+.cat-track{height:16px;background:var(--panel2);border-radius:4px;overflow:hidden;position:relative}
+.cat-fill{height:100%;border-radius:4px;background:var(--green-dim)}
+.cat-fill.over{background:var(--red)}
+.cat-amt{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--muted)}
+.cat-amt b{color:var(--text)}
+
+/* Cut list */
+.cut{border:1px solid var(--line);border-left:3px solid var(--red);border-radius:8px;padding:13px 15px;margin-bottom:10px;background:var(--panel2)}
+.cut.ok{border-left-color:var(--green)}
+.cut .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.cut .cat{font-weight:700;font-size:14.5px}
+.cut .amt{font-family:var(--mono);font-weight:600;color:var(--red);font-size:14.5px}
+.cut.ok .amt{color:var(--green)}
+.cut p{font-size:13px;color:var(--muted)}
+.cut p b{color:var(--text)}
+.cut .why{margin-top:6px;font-size:12.5px}
+.cut .why span{display:inline-block;background:rgba(232,93,93,.1);border:1px solid rgba(232,93,93,.25);color:#f0a0a0;border-radius:5px;padding:2px 8px;margin:2px 4px 0 0;font-family:var(--mono);font-size:11.5px}
+
+/* Transactions */
+.tx-controls{display:grid;grid-template-columns:1.2fr 1fr .8fr .9fr auto;gap:10px;align-items:end;margin-bottom:14px}
+table{width:100%;border-collapse:collapse}
+th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--panel2);font-size:13.5px}
+td.num{font-family:var(--mono);text-align:right}
+tr:hover td{background:rgba(46,204,143,.03)}
+.pill{display:inline-block;font-size:11px;font-family:var(--mono);border:1px solid var(--line);border-radius:99px;padding:2px 9px;color:var(--muted)}
+.del{color:var(--muted);cursor:pointer;background:none;border:none;font-size:15px;padding:2px 6px}
+.del:hover{color:var(--red)}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.empty{color:var(--muted);text-align:center;padding:30px 0;font-size:14px}
+
+/* Donut */
+.donut-wrap{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.legend{flex:1;min-width:180px}
+.leg-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--panel2)}
+.leg-row:last-child{border:none}
+.leg-l{display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:3px}
+.leg-amt{font-family:var(--mono);color:var(--muted);font-size:12.5px}
+
+footer{border-top:1px solid var(--line);padding:18px 0;color:var(--muted);font-size:12.5px;text-align:center}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.setup{grid-template-columns:1fr 1fr}.tx-controls{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div>
+      <div class="logo">Spend<span>Scope</span></div>
+      <div class="tagline">Track your spending. See exactly what to cut.</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="ghost" onclick="loadSample()">Load sample month</button>
+      <button class="danger" onclick="clearAll()">Clear all</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="setup">
+    <div>
+      <label>Monthly take-home income</label>
+      <input type="number" id="income" placeholder="3200" min="0" step="50">
+    </div>
+    <div>
+      <label>Savings goal (% of income)</label>
+      <select id="goal">
+        <option value="10">10% — starter</option>
+        <option value="20" selected>20% — standard</option>
+        <option value="30">30% — aggressive</option>
+      </select>
+    </div>
+    <div>
+      <label>Month label</label>
+      <input type="text" id="month" placeholder="e.g. August 2026">
+    </div>
+    <div><button onclick="render()">Analyze</button></div>
+  </div>
+
+  <div id="verdict"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <h3>Spending vs. target by category <span class="sub">red = over budget</span></h3>
+      <div id="cats"></div>
+    </div>
+    <div class="panel">
+      <h3>Where the money went <span class="sub">this month</span></h3>
+      <div class="donut-wrap">
+        <svg id="donut" width="160" height="160" viewBox="0 0 160 160"></svg>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:22px">
+    <h3>What to cut — exactly <span class="sub">your action list</span></h3>
+    <div id="cuts"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Transactions <span class="sub" id="tx-count"></span></h3>
+    <div class="tx-controls">
+      <div><label>Description</label><input id="t-desc" placeholder="Chipotle"></div>
+      <div><label>Category</label>
+        <select id="t-cat">
+          <option>Housing</option><option>Groceries</option><option selected>Dining out</option>
+          <option>Transport</option><option>Subscriptions</option><option>Shopping</option>
+          <option>Entertainment</option><option>Health</option><option>Utilities</option><option>Other</option>
+        </select>
+      </div>
+      <div><label>Amount ($)</label><input type="number" id="t-amt" placeholder="14.50" min="0" step="0.01"></div>
+      <div><label>Date</label><input type="date" id="t-date"></div>
+      <div><button onclick="addTx()">Add</button></div>
+    </div>
+    <div id="tx-table"></div>
+    <div class="toolbar">
+      <button class="ghost" onclick="exportCSV()">Export CSV</button>
+    </div>
+  </div>
+
+</main>
+
+<footer>SpendScope · built by Daniel Akisanmi · data stays in your browser</footer>
+
+<script>
+/* ================= state ================= */
+let txs = [];
+try { txs = JSON.parse(localStorage.getItem('spendscope') || '[]'); } catch(e){ txs = []; }
+try {
+  const cfg = JSON.parse(localStorage.getItem('spendscope-cfg') || '{}');
+  if (cfg.income) document.getElementById('income').value = cfg.income;
+  if (cfg.goal) document.getElementById('goal').value = cfg.goal;
+  if (cfg.month) document.getElementById('month').value = cfg.month;
+} catch(e){}
+
+function save(){
+  localStorage.setItem('spendscope', JSON.stringify(txs));
+  localStorage.setItem('spendscope-cfg', JSON.stringify({
+    income: document.getElementById('income').value,
+    goal: document.getElementById('goal').value,
+    month: document.getElementById('month').value
+  }));
+}
+
+/* ============ recommended budget (% of take-home) ============ */
+/* Based on 50/30/20-style guidance, split into concrete categories */
+const TARGETS = {
+  "Housing": .33, "Groceries": .10, "Dining out": .06, "Transport": .10,
+  "Subscriptions": .03, "Shopping": .05, "Entertainment": .04,
+  "Health": .05, "Utilities": .06, "Other": .03
+};
+const COLORS = {
+  "Housing":"#2ecc8f","Groceries":"#4cc9b0","Dining out":"#e8b44c","Transport":"#6fa8dc",
+  "Subscriptions":"#c084fc","Shopping":"#e88d5d","Entertainment":"#5dade8",
+  "Health":"#8fd15d","Utilities":"#a3b18a","Other":"#8fa39b"
+};
+
+/* ================= actions ================= */
+function addTx(){
+  const d = document.getElementById('t-desc').value.trim();
+  const c = document.getElementById('t-cat').value;
+  const a = parseFloat(document.getElementById('t-amt').value);
+  const dt = document.getElementById('t-date').value || new Date().toISOString().slice(0,10);
+  if (!d || !a || a <= 0){ alert('Enter a description and a positive amount.'); return; }
+  txs.push({desc:d, cat:c, amt:+a.toFixed(2), date:dt});
+  document.getElementById('t-desc').value=''; document.getElementById('t-amt').value='';
+  save(); render();
+}
+function delTx(i){ txs.splice(i,1); save(); render(); }
+function clearAll(){ if(confirm('Delete all transactions?')){ txs=[]; save(); render(); } }
+
+function loadSample(){
+  document.getElementById('income').value = 3200;
+  document.getElementById('month').value = 'Sample month';
+  txs = [
+    {desc:'Rent',cat:'Housing',amt:1150,date:'2026-08-01'},
+    {desc:'Electric + water',cat:'Utilities',amt:138,date:'2026-08-03'},
+    {desc:'Internet',cat:'Utilities',amt:65,date:'2026-08-03'},
+    {desc:'H-E-B groceries',cat:'Groceries',amt:96.40,date:'2026-08-04'},
+    {desc:'Chipotle',cat:'Dining out',amt:13.85,date:'2026-08-05'},
+    {desc:'Raising Cane\'s',cat:'Dining out',amt:12.40,date:'2026-08-06'},
+    {desc:'Gas',cat:'Transport',amt:42,date:'2026-08-07'},
+    {desc:'Netflix',cat:'Subscriptions',amt:15.49,date:'2026-08-08'},
+    {desc:'Spotify',cat:'Subscriptions',amt:11.99,date:'2026-08-08'},
+    {desc:'Gym',cat:'Subscriptions',amt:34.99,date:'2026-08-09'},
+    {desc:'DoorDash — Wingstop',cat:'Dining out',amt:31.20,date:'2026-08-10'},
+    {desc:'Kroger groceries',cat:'Groceries',amt:88.10,date:'2026-08-11'},
+    {desc:'Movie night',cat:'Entertainment',amt:28,date:'2026-08-12'},
+    {desc:'Chipotle',cat:'Dining out',amt:14.20,date:'2026-08-13'},
+    {desc:'Amazon — headphones case',cat:'Shopping',amt:24.99,date:'2026-08-14'},
+    {desc:'Gas',cat:'Transport',amt:40,date:'2026-08-15'},
+    {desc:'DoorDash — Chick-fil-A',cat:'Dining out',amt:27.60,date:'2026-08-16'},
+    {desc:'Walmart groceries',cat:'Groceries',amt:74.30,date:'2026-08-18'},
+    {desc:'New sneakers',cat:'Shopping',amt:95,date:'2026-08-19'},
+    {desc:'Whataburger',cat:'Dining out',amt:11.75,date:'2026-08-20'},
+    {desc:'Xbox Game Pass',cat:'Subscriptions',amt:16.99,date:'2026-08-21'},
+    {desc:'DoorDash — Cava',cat:'Dining out',amt:29.85,date:'2026-08-22'},
+    {desc:'Ice cream run',cat:'Dining out',amt:9.40,date:'2026-08-23'},
+    {desc:'Uber',cat:'Transport',amt:18.60,date:'2026-08-24'},
+    {desc:'Pharmacy',cat:'Health',amt:22,date:'2026-08-25'},
+  ];
+  save(); render();
+}
+
+/* ================= analysis engine ================= */
+function analyze(){
+  const income = parseFloat(document.getElementById('income').value) || 0;
+  const goalPct = parseInt(document.getElementById('goal').value) / 100;
+  const byCat = {};
+  txs.forEach(t => { byCat[t.cat] = (byCat[t.cat]||0) + t.amt; });
+  const total = txs.reduce((s,t)=>s+t.amt, 0);
+  const savings = income - total;
+  const savingsTarget = income * goalPct;
+
+  // Per-category over/under vs target
+  const cats = Object.keys(byCat).map(c => {
+    const target = income * (TARGETS[c] ?? .05);
+    return { cat:c, spent:byCat[c], target, over: byCat[c] - target };
+  }).sort((a,b)=>b.spent-a.spent);
+
+  // ---- Exact cut recommendations ----
+  const cuts = [];
+  const shortfall = Math.max(0, savingsTarget - savings);
+  const overCats = cats.filter(c=>c.over > 5).sort((a,b)=>b.over-a.over);
+
+  overCats.forEach(c => {
+    // biggest offenders in this category
+    const items = txs.filter(t=>t.cat===c.cat);
+    // merchant totals
+    const byMerchant = {};
+    items.forEach(t=>{
+      const key = t.desc.replace(/—.*/,'').trim();
+      byMerchant[key]=(byMerchant[key]||0)+t.amt;
+    });
+    const top = Object.entries(byMerchant).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    // delivery premium flag
+    const delivery = items.filter(t=>/doordash|uber ?eats|grubhub/i.test(t.desc));
+    const deliveryTotal = delivery.reduce((s,t)=>s+t.amt,0);
+    // recurring same-amount detection (subscriptions creep)
+    cuts.push({
+      cat:c.cat, cut:c.over,
+      detail: `You spent <b>$${c.spent.toFixed(2)}</b> (${(c.spent/income*100).toFixed(1)}% of income); the target for ${c.cat} is <b>$${c.target.toFixed(2)}</b> (${((TARGETS[c.cat]??.05)*100).toFixed(0)}%). Cut <b>$${c.over.toFixed(2)}</b> to get on track.`,
+      offenders: top.map(([m,v])=>`${m} $${v.toFixed(0)}`),
+      extra: deliveryTotal>0 ? `Delivery orders alone were $${deliveryTotal.toFixed(2)} — ordering pickup instead typically saves ~30% in fees and markups.` : null
+    });
+  });
+
+  // Subscription audit even if not over
+  const subs = txs.filter(t=>t.cat==='Subscriptions');
+  if (subs.length >= 3 && !overCats.find(c=>c.cat==='Subscriptions')) {
+    const subTotal = subs.reduce((s,t)=>s+t.amt,0);
+    cuts.push({
+      cat:'Subscriptions audit', cut:0, ok:true,
+      detail:`You have <b>${subs.length} active subscriptions</b> totaling <b>$${subTotal.toFixed(2)}/mo</b> ($${(subTotal*12).toFixed(0)}/yr). Cancel any you haven't used in 30 days.`,
+      offenders: subs.map(s=>`${s.desc} $${s.amt.toFixed(2)}`), extra:null
+    });
+  }
+
+  return { income, total, savings, savingsTarget, goalPct, cats, cuts, shortfall };
+}
+
+/* ================= render ================= */
+function fmt(n){ return '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function render(){
+  save();
+  const a = analyze();
+  const hasData = txs.length > 0;
+  const income = a.income;
+
+  // Verdict
+  const v = document.getElementById('verdict');
+  if (!hasData || !income) {
+    v.innerHTML = `<div class="verdict"><h2>Add your income and transactions to get started</h2><p>Or hit "Load sample month" to see how the analysis works.</p></div>`;
+  } else if (a.savings >= a.savingsTarget) {
+    v.innerHTML = `<div class="verdict good"><h2>On track — you kept <span class="big pos">${fmt(a.savings)}</span> this month</h2>
+    <p>That's ${(a.savings/income*100).toFixed(1)}% of income saved, beating your ${(a.goalPct*100)}% goal (${fmt(a.savingsTarget)}). Spending: ${fmt(a.total)} of ${fmt(income)}.</p></div>`;
+  } else if (a.savings >= 0) {
+    v.innerHTML = `<div class="verdict bad"><h2>Short of goal — saved <span class="big neg">${fmt(a.savings)}</span>, goal is ${fmt(a.savingsTarget)}</h2>
+    <p>You need to free up <b style="color:var(--red)">${fmt(a.shortfall)}</b> per month. The cut list below shows exactly where to find it.</p></div>`;
+  } else {
+    v.innerHTML = `<div class="verdict bad"><h2>Overspent by <span class="big neg">${fmt(-a.savings)}</span> this month</h2>
+    <p>Spending (${fmt(a.total)}) exceeded income (${fmt(income)}). Start with the biggest item in the cut list below.</p></div>`;
+  }
+
+  // Category bars
+  const catsEl = document.getElementById('cats');
+  if (!hasData){ catsEl.innerHTML = '<div class="empty">No transactions yet.</div>'; }
+  else {
+    const maxSpent = Math.max(...a.cats.map(c=>Math.max(c.spent,c.target)), 1);
+    catsEl.innerHTML = a.cats.map(c=>`
+      <div class="cat-row">
+        <div class="cat-name">${c.cat}</div>
+        <div class="cat-track"><div class="cat-fill ${c.over>5?'over':''}" style="width:${Math.min(100, c.spent/maxSpent*100)}%"></div></div>
+        <div class="cat-amt"><b>${fmt(c.spent)}</b><br>of ${fmt(c.target)}</div>
+      </div>`).join('');
+  }
+
+  // Donut
+  drawDonut(a.cats);
+
+  // Cuts
+  const cutsEl = document.getElementById('cuts');
+  if (!hasData){ cutsEl.innerHTML = '<div class="empty">Your personalized cut list appears here.</div>'; }
+  else if (a.cuts.length === 0){
+    cutsEl.innerHTML = `<div class="cut ok"><div class="head"><span class="cat">Nothing to cut</span><span class="amt">✓</span></div><p>Every category is at or under its target. Keep it up.</p></div>`;
+  } else {
+    cutsEl.innerHTML = a.cuts.map(c=>`
+      <div class="cut ${c.ok?'ok':''}">
+        <div class="head"><span class="cat">${c.cat}</span><span class="amt">${c.ok?'review':('cut ' + fmt(c.cut))}</span></div>
+        <p>${c.detail}</p>
+        ${c.offenders && c.offenders.length ? `<div class="why">Biggest line items: ${c.offenders.map(o=>`<span>${o}</span>`).join('')}</div>`:''}
+        ${c.extra ? `<p class="why" style="color:var(--amber)">${c.extra}</p>`:''}
+      </div>`).join('');
+  }
+
+  // Table
+  const tbl = document.getElementById('tx-table');
+  document.getElementById('tx-count').textContent = txs.length ? `${txs.length} entries · ${fmt(a.total)} total` : '';
+  if (!hasData){ tbl.innerHTML = '<div class="empty">Add a transaction above, or load the sample month.</div>'; }
+  else {
+    const rows = txs.map((t,i)=>({...t,i})).sort((x,y)=>y.date.localeCompare(x.date));
+    tbl.innerHTML = `<table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right">Amount</th><th></th></tr></thead><tbody>
+      ${rows.map(t=>`<tr><td>${t.date}</td><td>${t.desc}</td><td><span class="pill">${t.cat}</span></td><td class="num">${fmt(t.amt)}</td>
+      <td><button class="del" onclick="delTx(${t.i})" title="delete">×</button></td></tr>`).join('')}
+    </tbody></table>`;
+  }
+}
+
+function drawDonut(cats){
+  const svg = document.getElementById('donut');
+  const legend = document.getElementById('legend');
+  const total = cats.reduce((s,c)=>s+c.spent,0);
+  if (!total){ svg.innerHTML=''; legend.innerHTML='<div class="empty">—</div>'; return; }
+  const cx=80, cy=80, r=62, w=26;
+  let angle=-Math.PI/2, paths='';
+  cats.forEach(c=>{
+    const frac=c.spent/total, sweep=frac*2*Math.PI;
+    const x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
+    angle+=sweep;
+    const x2=cx+r*Math.cos(angle), y2=cy+r*Math.sin(angle);
+    const large=sweep>Math.PI?1:0;
+    paths+=`<path d="M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}" fill="none" stroke="${COLORS[c.cat]||'#888'}" stroke-width="${w}"/>`;
+  });
+  svg.innerHTML=paths+`<text x="80" y="76" text-anchor="middle" fill="#e8f0ec" font-size="15" font-weight="700" font-family="Inter">${'$'+Math.round(total).toLocaleString()}</text><text x="80" y="94" text-anchor="middle" fill="#8fa39b" font-size="10" font-family="Inter">total spent</text>`;
+  legend.innerHTML=cats.slice(0,7).map(c=>`
+    <div class="leg-row"><div class="leg-l"><span class="dot" style="background:${COLORS[c.cat]||'#888'}"></span>${c.cat}</div>
+    <span class="leg-amt">${(c.spent/total*100).toFixed(0)}%</span></div>`).join('');
+}
+
+function exportCSV(){
+  const csv = 'date,description,category,amount\n' + txs.map(t=>`${t.date},"${t.desc}",${t.cat},${t.amt}`).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'spendscope-transactions.csv';
+  a.click();
+}
+
+render();
+</script>
+</body>
+</html>
